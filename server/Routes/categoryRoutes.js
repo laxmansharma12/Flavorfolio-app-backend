@@ -10,12 +10,6 @@ const router = express.Router();
 // create category
 router.post("/create-category", createCategoryController);
 
-update category
-router.put(
-	"/update-category/:id",
-	updateCategoryController
-);
-
 //getALl category
 router.get("/get-category", categoryController);
 
