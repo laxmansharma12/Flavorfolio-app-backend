@@ -30,11 +30,11 @@ app.use("/api/v1/category", categoryRoutes);
 
 //rest api
 app.get("/", (req, res) => {
-	res.send("<h1>Welcome to Flavorfolio</h1>");
+	res.send("Welcome to Flavorfolio");
 });
 
 //PORT
-const PORT = process.env.PORT || 8080;
+const PORT = 8080;
 
 //run listen
 app.listen(PORT, (req, res) => {
