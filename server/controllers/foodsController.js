@@ -21,7 +21,7 @@ export const createfoodController = async (req, res) => {
 				return res.status(500).send({ error: "Steps is Required" });
 			case !userId:
 				return res.status(500).send({ error: "UserId is Required" });
-			case photo && photo.size > 1000000:
+			case photo && photo.size > 1000:
 				return res
 					.status(500)
 					.send({ error: "photo is Required and should be less then 1mb" });
