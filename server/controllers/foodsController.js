@@ -54,8 +54,7 @@ export const getAllFoodController = async (req, res) => {
 		const foods = await foodModel
 			.find({})
 			.populate("userId")
-			.select("-photo")
-			.limit(10)
+			.select("-photo")		
 			.sort({ createdAt: -1 });
 		res.status(200).send({
 			success: true,
