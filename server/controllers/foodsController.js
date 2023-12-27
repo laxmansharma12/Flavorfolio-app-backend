@@ -53,8 +53,9 @@ export const getAllFoodController = async (req, res) => {
 	try {
 		const foods = await foodModel
 			.find({})
+
 			.populate("userId")
-			.select("-photo")		
+			.select("-photo")
 			.sort({ createdAt: -1 });
 		res.status(200).send({
 			success: true,
@@ -78,7 +79,8 @@ export const getSingleFoodController = async (req, res) => {
 		const food = await foodModel
 			.findOne({ slug: req.params.slug })
 			.select("-photo")
-			.populate("user");
+			.populate("category")
+			.populate("userId");
 		res.status(200).send({
 			success: true,
 			message: "Single Food Fetched",
@@ -179,6 +181,55 @@ export const updatefoodController = async (req, res) => {
 		res.status(500).send({
 			success: false,
 			message: "Error in updating food",
+		});
+	}
+};
+
+// search recipes
+export const searchRecipesController = async (req, res) => {
+	try {
+		const { keyword } = req.params;
+		const results = await foodModel
+			.find({
+				$or: [{ name: { $regex: keyword, $options: "i" } }],
+				$or: [{ description: { $regex: keyword, $options: "i" } }],
+				$or: [{ ingredients: { $regex: keyword, $options: "i" } }],
+			})
+			.select("-photo");
+		res.json(results);
+	} catch (error) {
+		console.log(error);
+		res.status(400).send({
+			success: false,
+			message: "Error In Search Recipe API",
+			error,
+		});
+	}
+};
+
+// similar recipe
+export const realtedFoodController = async (req, res) => {
+	try {
+		const { fid, cid } = req.params;
+		const recipe = await foodModel
+			.find({
+				category: cid,
+				_id: { $ne: fid },
+			})
+			.populate("category")
+			.select("-photo")
+			.limit(4);
+
+		res.status(200).send({
+			success: true,
+			recipe,
+		});
+	} catch (error) {
+		console.log(error);
+		res.status(400).send({
+			success: false,
+			message: "error while geting related recipe",
+			error,
 		});
 	}
 };

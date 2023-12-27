@@ -5,6 +5,8 @@ import {
 	foodPhotoController,
 	getAllFoodController,
 	getSingleFoodController,
+	realtedFoodController,
+	searchRecipesController,
 	updatefoodController,
 } from "../controllers/foodsController.js";
 import formidable from "express-formidable";
@@ -23,6 +25,9 @@ router.get("/get-food", getAllFoodController);
 //get single food
 router.get("/get-food/:slug", getSingleFoodController);
 
+//similar product
+router.get("/related-food/:fid/:cid", realtedFoodController);
+
 //get food photo
 router.get("/food-photo/:fid", foodPhotoController);
 
@@ -30,11 +35,9 @@ router.get("/food-photo/:fid", foodPhotoController);
 router.delete("/delete-food/:fid", deleteFoodController);
 
 //update food
-router.post(
-	"/update-food/:fid",
-	requireSignIn,
-	formidable(),
-	updatefoodController
-);
+router.post("/update-food/:fid", formidable(), updatefoodController);
+
+//search recipes
+router.get("/search/:keyword", searchRecipesController);
 
 export default router;
