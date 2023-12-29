@@ -36,14 +36,14 @@ export const createfoodController = async (req, res) => {
 		await foods.save();
 		res.status(201).send({
 			success: true,
-			message: "food added Successfully!",
+			message: "Recipe Added Successfully!",
 			foods,
 		});
 	} catch (error) {
 		console.log(error);
 		res.status(500).send({
 			success: false,
-			message: "Error in adding food",
+			message: "Error in Adding Recipe",
 		});
 	}
 };
@@ -135,30 +135,32 @@ export const deleteFoodController = async (req, res) => {
 //update food controller
 export const updatefoodController = async (req, res) => {
 	try {
-		const { name, slug, description, ingredients, steps, user } = req.fields;
+		const { name, description, ingredients, steps, userId, category } =
+			req.fields;
 		const { photo } = req.files;
 
 		//validation
-		if (!name) {
-			return res.send({ message: "Name is required" });
-		}
-		if (!description) {
-			return res.send({ message: "Description is required" });
-		}
-		if (!ingredients) {
-			return res.send({ message: "Ingridients are required" });
-		}
-		if (!photo || photo.size > 1000000) {
-			return res.send({
-				message: "Photo is required and should be less than 1mb",
-			});
-		}
-		if (!steps) {
-			return res.send({ message: "steps are required" });
+		switch (true) {
+			case !name:
+				return res.status(500).send({ error: "Name is Required" });
+			case !description:
+				return res.status(500).send({ error: "Description is Required" });
+			case !ingredients:
+				return res.status(500).send({ error: "Ingredients is Required" });
+			case !category:
+				return res.status(500).send({ error: "Category is Required" });
+			case !steps:
+				return res.status(500).send({ error: "Steps is Required" });
+			case !userId:
+				return res.status(500).send({ error: "UserId is Required" });
+			case photo && photo.size > 1000000:
+				return res
+					.status(500)
+					.send({ error: "photo is Required and should be less then 1mb" });
 		}
 
 		//save
-		const foods = new foodModel.findByIdAndUpdate(
+		const foods = await foodModel.findByIdAndUpdate(
 			req.params.fid,
 			{
 				...req.fields,
@@ -167,20 +169,20 @@ export const updatefoodController = async (req, res) => {
 			{ new: true }
 		);
 		if (photo) {
-			foods.photo.data = fs.readFilesSync(photo.path);
+			foods.photo.data = fs.readFileSync(photo.path);
 			foods.photo.contentType = photo.type;
 		}
 		await foods.save();
 		res.status(201).send({
 			success: true,
-			message: "food updated Successfully!",
+			message: "Recipe Updated Successfully!",
 			foods,
 		});
 	} catch (error) {
 		console.log(error);
 		res.status(500).send({
 			success: false,
-			message: "Error in updating food",
+			message: "Error In Updating Recipe",
 		});
 	}
 };

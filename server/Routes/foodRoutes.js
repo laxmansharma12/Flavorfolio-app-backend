@@ -35,7 +35,7 @@ router.get("/food-photo/:fid", foodPhotoController);
 router.delete("/delete-food/:fid", deleteFoodController);
 
 //update food
-router.post("/update-food/:fid", formidable(), updatefoodController);
+router.put("/update-food/:fid", formidable(), updatefoodController);
 
 //search recipes
 router.get("/search/:keyword", searchRecipesController);
