@@ -2,10 +2,13 @@ import express from "express";
 import {
 	createfoodController,
 	deleteFoodController,
+	deleteSaveRecipeController,
 	foodPhotoController,
 	getAllFoodController,
+	getAllSavedRecipesController,
 	getSingleFoodController,
 	realtedFoodController,
+	saveRecipeController,
 	searchRecipesController,
 	updatefoodController,
 } from "../controllers/foodsController.js";
@@ -39,5 +42,14 @@ router.put("/update-food/:fid", formidable(), updatefoodController);
 
 //search recipes
 router.get("/search/:keyword", searchRecipesController);
+
+//save recipes
+router.post("/save-recipe", formidable(), saveRecipeController);
+
+//save recipes
+router.delete("/delete-recipe/:fid", deleteSaveRecipeController);
+
+//get all  saved recipes
+router.get("/get-savedRecipes", getAllSavedRecipesController);
 
 export default router;
