@@ -6,6 +6,7 @@ import {
 	foodPhotoController,
 	getAllFoodController,
 	getAllSavedRecipesController,
+	getRecentRecipesController,
 	getSingleFoodController,
 	realtedFoodController,
 	saveRecipeController,
@@ -27,6 +28,9 @@ router.get("/get-food", getAllFoodController);
 
 //get single food
 router.get("/get-food/:slug", getSingleFoodController);
+
+//get recent recipes
+router.get("/get-recent", getRecentRecipesController);
 
 //similar product
 router.get("/related-food/:fid/:cid", realtedFoodController);

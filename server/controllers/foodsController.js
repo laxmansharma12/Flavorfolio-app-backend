@@ -315,7 +315,7 @@ export const deleteSaveRecipeController = async (req, res) => {
 	}
 };
 
-//get all food controller
+//get all saved recipes controller
 export const getAllSavedRecipesController = async (req, res) => {
 	try {
 		const Recipes = await Recipe.find({})
@@ -333,6 +333,31 @@ export const getAllSavedRecipesController = async (req, res) => {
 		res.status(500).send({
 			success: false,
 			message: "Erorr in getting saved recipes",
+			error: error.message,
+		});
+	}
+};
+
+//get recent recipes controller
+export const getRecentRecipesController = async (req, res) => {
+	try {
+		const foods = await foodModel
+			.find({})
+			.populate("userId")
+			.select("-photo")
+			.sort({ createdAt: -1 })
+			.limit(6);
+		res.status(200).send({
+			success: true,
+			counTotal: foods.length,
+			message: "Allfoods ",
+			foods,
+		});
+	} catch (error) {
+		console.log(error);
+		res.status(500).send({
+			success: false,
+			message: "Erorr in getting food",
 			error: error.message,
 		});
 	}
