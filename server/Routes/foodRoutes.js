@@ -2,10 +2,7 @@ import express from "express";
 import {
 	createfoodController,
 	deleteFoodController,
-	deleteSaveRecipeController,
-	foodPhotoController,
 	getAllFoodController,
-	getAllSavedRecipesController,
 	getRecentRecipesController,
 	getSingleFoodController,
 	realtedFoodController,
@@ -35,9 +32,6 @@ router.get("/get-recent", getRecentRecipesController);
 //similar product
 router.get("/related-food/:fid/:cid", realtedFoodController);
 
-//get food photo
-router.get("/food-photo/:fid", foodPhotoController);
-
 //delete food
 router.delete("/delete-food/:fid", deleteFoodController);
 
@@ -49,11 +43,5 @@ router.get("/search/:keyword", searchRecipesController);
 
 //save recipes
 router.post("/save-recipe", formidable(), saveRecipeController);
-
-//save recipes
-router.delete("/delete-recipe/:fid", deleteSaveRecipeController);
-
-//get all  saved recipes
-router.get("/get-savedRecipes", getAllSavedRecipesController);
 
 export default router;

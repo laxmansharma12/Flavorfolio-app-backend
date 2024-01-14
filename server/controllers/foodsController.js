@@ -1,13 +1,14 @@
 import foodModel from "../Models/Foods.js";
-import Recipe from "../Models/savedRecipesModel.js";
-import fs from "fs";
+import userModel from "../Models/User.js";
 import slugify from "slugify";
+import cloudinary from "../utils/cloudinary.js";
 export const createfoodController = async (req, res) => {
 	try {
 		const { name, description, ingredients, steps, userId, category } =
 			req.fields;
 		const { photo } = req.files;
-
+		// Get the path to the uploaded file
+		const filePath = photo.path;
 		//validation
 		switch (true) {
 			case !name:
@@ -22,18 +23,19 @@ export const createfoodController = async (req, res) => {
 				return res.status(500).send({ error: "Steps is Required" });
 			case !userId:
 				return res.status(500).send({ error: "UserId is Required" });
-			case photo && photo.size > 1000000:
-				return res
-					.status(500)
-					.send({ error: "photo is Required and should be less then 1mb" });
 		}
 
 		//save
-		const foods = new foodModel({ ...req.fields, slug: slugify(name) });
-		if (photo) {
-			foods.photo.data = fs.readFileSync(photo.path);
-			foods.photo.contentType = photo.type;
-		}
+		const img = await cloudinary.uploader.upload(filePath, {
+			folder: "foodPhotos",
+		});
+
+		const foods = new foodModel({
+			...req.fields,
+			photo: { id: img.public_id, url: img.secure_url },
+			slug: slugify(name),
+		});
+
 		await foods.save();
 		res.status(201).send({
 			success: true,
@@ -55,7 +57,6 @@ export const getAllFoodController = async (req, res) => {
 		const foods = await foodModel
 			.find({})
 			.populate("userId")
-			.select("-photo")
 			.sort({ createdAt: -1 });
 		res.status(200).send({
 			success: true,
@@ -78,7 +79,6 @@ export const getSingleFoodController = async (req, res) => {
 	try {
 		const food = await foodModel
 			.findOne({ slug: req.params.slug })
-			.select("-photo")
 			.populate("category")
 			.populate("userId");
 		res.status(200).send({
@@ -96,28 +96,13 @@ export const getSingleFoodController = async (req, res) => {
 	}
 };
 
-//get food photo controller
-export const foodPhotoController = async (req, res) => {
-	try {
-		const food = await foodModel.findById(req.params.fid).select("photo");
-		if (food.photo.data) {
-			res.set("Content-type", food.photo.contentType);
-			return res.status(200).send(food.photo.data);
-		}
-	} catch (error) {
-		console.log(error);
-		res.status(500).send({
-			success: false,
-			message: "Erorr in getting food photo",
-			error: error.message,
-		});
-	}
-};
-
 //delete food controller
 export const deleteFoodController = async (req, res) => {
 	try {
-		await foodModel.findByIdAndDelete(req.params.fid).select("-photo");
+		const food = await foodModel.findByIdAndDelete(req.params.fid);
+		if (food?.photo?.id) {
+			await cloudinary.uploader.destroy(food?.photo?.id);
+		}
 		res.status(200).send({
 			success: true,
 			message: "Food Deleted Successfully",
@@ -139,6 +124,9 @@ export const updatefoodController = async (req, res) => {
 			req.fields;
 		const { photo } = req.files;
 
+		// Check if a photo is present in the request and set photo path
+		const filePath = photo ? photo.path : "";
+
 		//validation
 		switch (true) {
 			case !name:
@@ -153,30 +141,51 @@ export const updatefoodController = async (req, res) => {
 				return res.status(500).send({ error: "Steps is Required" });
 			case !userId:
 				return res.status(500).send({ error: "UserId is Required" });
-			case photo && photo.size > 1000000:
-				return res
-					.status(500)
-					.send({ error: "photo is Required and should be less then 1mb" });
 		}
 
-		//save
-		const foods = await foodModel.findByIdAndUpdate(
-			req.params.fid,
-			{
-				...req.fields,
-				slug: slugify(name),
-			},
-			{ new: true }
-		);
-		if (photo) {
-			foods.photo.data = fs.readFileSync(photo.path);
-			foods.photo.contentType = photo.type;
+		//find photo and delete it
+		const data = await foodModel.findById(req.params.fid);
+		if (filePath !== "") {
+			const oldPhoto = data?.photo?.id;
+			if (oldPhoto) {
+				await cloudinary.uploader.destroy(oldPhoto);
+			}
 		}
+
+		// Save
+		let foods;
+		if (filePath !== "") {
+			const img = await cloudinary.uploader.upload(filePath, {
+				folder: "foodPhotos",
+			});
+
+			foods = await foodModel.findByIdAndUpdate(
+				req.params.fid,
+				{
+					...req.fields,
+					photo: { id: img.public_id, url: img.secure_url },
+					slug: slugify(name),
+				},
+				{ new: true }
+			);
+		} else {
+			// If no new photo is uploaded, update other fields without modifying the photo field
+			foods = await foodModel.findByIdAndUpdate(
+				req.params.fid,
+				{
+					...req.fields,
+					slug: slugify(name),
+				},
+				{ new: true }
+			);
+		}
+
 		await foods.save();
 		res.status(201).send({
 			success: true,
 			message: "Recipe Updated Successfully!",
 			foods,
+			data,
 		});
 	} catch (error) {
 		console.log(error);
@@ -191,13 +200,11 @@ export const updatefoodController = async (req, res) => {
 export const searchRecipesController = async (req, res) => {
 	try {
 		const { keyword } = req.params;
-		const results = await foodModel
-			.find({
-				$or: [{ name: { $regex: keyword, $options: "i" } }],
-				$or: [{ description: { $regex: keyword, $options: "i" } }],
-				$or: [{ ingredients: { $regex: keyword, $options: "i" } }],
-			})
-			.select("-photo");
+		const results = await foodModel.find({
+			$or: [{ name: { $regex: keyword, $options: "i" } }],
+			$or: [{ description: { $regex: keyword, $options: "i" } }],
+			$or: [{ ingredients: { $regex: keyword, $options: "i" } }],
+		});
 		res.json(results);
 	} catch (error) {
 		console.log(error);
@@ -219,7 +226,6 @@ export const realtedFoodController = async (req, res) => {
 				_id: { $ne: fid },
 			})
 			.populate("category")
-			.select("-photo")
 			.limit(4);
 
 		res.status(200).send({
@@ -239,50 +245,56 @@ export const realtedFoodController = async (req, res) => {
 //save saved recipes
 export const saveRecipeController = async (req, res) => {
 	try {
-		const { _id, name, description, ingredients, steps, userId, category } =
-			req.fields;
-		const { photo } = req.files;
-
-		//validation
-		switch (true) {
-			case !_id:
-				return res.status(500).send({ error: "Id is Required" });
-			case !name:
-				return res.status(500).send({ error: "Name is Required" });
-			case !description:
-				return res.status(500).send({ error: "Description is Required" });
-			case !ingredients:
-				return res.status(500).send({ error: "Ingredients is Required" });
-			case !category:
-				return res.status(500).send({ error: "Category is Required" });
-			case !steps:
-				return res.status(500).send({ error: "Steps is Required" });
-			case !userId:
-				return res.status(500).send({ error: "UserId is Required" });
-			case photo && photo.size > 1000000:
-				return res
-					.status(500)
-					.send({ error: "photo is Required and should be less then 1mb" });
-		}
+		const { _id, userId } = req.fields;
 
 		//check exisiting saved Recipe
-		const existingSavedRecipe = await Recipe.findOne({ _id });
+		{
+			try {
+				const user = await userModel.findById(userId);
+				const savedRecipes = user.savedRecipes.find(
+					(id) => id.toString() === _id
+				);
 
-		//existingSavedRecipe user
-		if (existingSavedRecipe) {
-			return res.status(200).send({
-				success: false,
-				message: "Already Saved!",
-			});
+				if (savedRecipes) {
+					let user = await userModel.findByIdAndUpdate(
+						userId,
+						{
+							$pull: {
+								savedRecipes: _id,
+							},
+						},
+						{
+							new: true,
+						}
+					);
+					return res.status(200).send({
+						success: true,
+						message: "Recipe UnSaved!",
+					});
+				} else {
+					let user = await userModel.findByIdAndUpdate(
+						userId,
+						{
+							$push: {
+								savedRecipes: _id,
+							},
+						},
+						{
+							new: true,
+						}
+					);
+					return res.status(200).send({
+						success: true,
+						message: "Recipe Saved!",
+					});
+				}
+			} catch (error) {
+				console.log(error);
+			}
 		}
 
 		//save
-		const foods = new Recipe({ ...req.fields, slug: slugify(name) });
-		if (photo) {
-			foods.photo.data = fs.readFileSync(photo.path);
-			foods.photo.contentType = photo.type;
-		}
-		await foods.save();
+
 		res.status(201).send({
 			success: true,
 			message: "Recipe saved Successfully!",
@@ -297,54 +309,12 @@ export const saveRecipeController = async (req, res) => {
 	}
 };
 
-//delete recipe controller
-export const deleteSaveRecipeController = async (req, res) => {
-	try {
-		await Recipe.findByIdAndDelete(req.params.fid).select("-photo");
-		res.status(200).send({
-			success: true,
-			message: "Recipe Unsaved",
-		});
-	} catch (error) {
-		console.log(error);
-		res.status(500).send({
-			success: false,
-			message: "Erorr in unsaving recipe",
-			error: error.message,
-		});
-	}
-};
-
-//get all saved recipes controller
-export const getAllSavedRecipesController = async (req, res) => {
-	try {
-		const Recipes = await Recipe.find({})
-			.populate("userId")
-			.select("-photo")
-			.sort({ createdAt: -1 });
-		res.status(200).send({
-			success: true,
-			counTotal: Recipes.length,
-			message: "AllSavedRecipes ",
-			Recipes,
-		});
-	} catch (error) {
-		console.log(error);
-		res.status(500).send({
-			success: false,
-			message: "Erorr in getting saved recipes",
-			error: error.message,
-		});
-	}
-};
-
 //get recent recipes controller
 export const getRecentRecipesController = async (req, res) => {
 	try {
 		const foods = await foodModel
 			.find({})
 			.populate("userId")
-			.select("-photo")
 			.sort({ createdAt: -1 })
 			.limit(6);
 		res.status(200).send({

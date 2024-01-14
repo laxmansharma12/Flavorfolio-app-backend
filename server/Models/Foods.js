@@ -19,8 +19,14 @@ const foodSchema = new mongoose.Schema(
 			required: true,
 		},
 		photo: {
-			data: Buffer,
-			contentType: String,
+			id: {
+				type: String,
+				required: true,
+			},
+			url: {
+				type: String,
+				required: true,
+			},
 		},
 		steps: {
 			type: String,
@@ -38,4 +44,5 @@ const foodSchema = new mongoose.Schema(
 	},
 	{ timestamps: true }
 );
+
 export default mongoose.model("foods", foodSchema);

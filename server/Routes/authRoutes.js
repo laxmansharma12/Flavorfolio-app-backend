@@ -3,6 +3,7 @@ import {
 	registerController,
 	loginController,
 	forgotPasswordController,
+	SingleUserController,
 } from "../controllers/authControllers.js";
 
 //router object
@@ -18,5 +19,8 @@ router.post("/login", loginController);
 
 //FORGOT-PASSWORD || METHOD POST
 router.post("/forgot-password", forgotPasswordController);
+
+//SINGLE-USER || METHOD GET
+router.get("/single-user/:uid", SingleUserController);
 
 export default router;

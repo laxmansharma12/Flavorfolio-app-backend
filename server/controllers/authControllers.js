@@ -144,3 +144,25 @@ export const forgotPasswordController = async (req, res) => {
 		});
 	}
 };
+
+//GET SINGLE USER
+export const SingleUserController = async (req, res) => {
+	try {
+		const user = await userModel
+			.findById(req.params.uid)
+			.populate("savedRecipes");
+		if (user) {
+			res.status(200).send({
+				success: true,
+				user,
+			});
+		}
+	} catch (error) {
+		console.log(error);
+		res.status(500).send({
+			success: false,
+			message: "Error in getting single user",
+			error,
+		});
+	}
+};

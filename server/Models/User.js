@@ -24,6 +24,12 @@ const userSchema = new mongoose.Schema(
 			type: Number,
 			default: 0,
 		},
+		savedRecipes: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: "foods",
+			},
+		],
 	},
 	{ timestamps: true }
 );
