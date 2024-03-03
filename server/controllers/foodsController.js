@@ -201,9 +201,11 @@ export const searchRecipesController = async (req, res) => {
 	try {
 		const { keyword } = req.params;
 		const results = await foodModel.find({
-			$or: [{ name: { $regex: keyword, $options: "i" } }],
-			$or: [{ description: { $regex: keyword, $options: "i" } }],
-			$or: [{ ingredients: { $regex: keyword, $options: "i" } }],
+			$or: [
+				{ name: { $regex: keyword, $options: "i" } },
+			      { description: { $regex: keyword, $options: "i" } },
+			   { ingredients: { $regex: keyword, $options: "i" } } ,
+			],
 		});
 		res.json(results);
 	} catch (error) {
