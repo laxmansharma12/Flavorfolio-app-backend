@@ -3,12 +3,13 @@ import {
 	categoryController,
 	createCategoryController,
 } from "../controllers/categoryControllers.js";
+import { requireSignIn } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 //routes
 // create category
-router.post("/create-category", createCategoryController);
+router.post("/create-category", requireSignIn, createCategoryController);
 
 //getALl category
 router.get("/get-category", categoryController);

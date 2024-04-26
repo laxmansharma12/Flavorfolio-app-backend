@@ -5,6 +5,7 @@ import {
 	forgotPasswordController,
 	SingleUserController,
 } from "../controllers/authControllers.js";
+import { requireSignIn } from "../middlewares/authMiddleware.js";
 
 //router object
 const router = express.Router();
@@ -21,6 +22,6 @@ router.post("/login", loginController);
 router.post("/forgot-password", forgotPasswordController);
 
 //SINGLE-USER || METHOD GET
-router.get("/single-user/:uid", SingleUserController);
+router.get("/single-user/:uid", requireSignIn, SingleUserController);
 
 export default router;

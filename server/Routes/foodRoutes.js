@@ -18,7 +18,7 @@ const router = express.Router();
 //---------------routes-----------------------
 
 //create food
-router.post("/create-food", formidable(), createfoodController);
+router.post("/create-food", requireSignIn, formidable(), createfoodController);
 
 //get all food
 router.get("/get-food", getAllFoodController);
@@ -33,15 +33,20 @@ router.get("/get-recent", getRecentRecipesController);
 router.get("/related-food/:fid/:cid", realtedFoodController);
 
 //delete food
-router.delete("/delete-food/:fid", deleteFoodController);
+router.delete("/delete-food/:fid", requireSignIn, deleteFoodController);
 
 //update food
-router.put("/update-food/:fid", formidable(), updatefoodController);
+router.put(
+	"/update-food/:fid",
+	requireSignIn,
+	formidable(),
+	updatefoodController
+);
 
 //search recipes
 router.get("/search/:keyword", searchRecipesController);
 
 //save recipes
-router.post("/save-recipe", formidable(), saveRecipeController);
+router.post("/save-recipe", requireSignIn, formidable(), saveRecipeController);
 
 export default router;

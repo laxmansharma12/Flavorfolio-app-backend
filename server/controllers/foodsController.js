@@ -57,6 +57,7 @@ export const getAllFoodController = async (req, res) => {
 		const foods = await foodModel
 			.find({})
 			.populate("userId")
+			.populate("category")
 			.sort({ createdAt: -1 });
 		res.status(200).send({
 			success: true,
@@ -159,25 +160,29 @@ export const updatefoodController = async (req, res) => {
 				folder: "foodPhotos",
 			});
 
-			foods = await foodModel.findByIdAndUpdate(
-				req.params.fid,
-				{
-					...req.fields,
-					photo: { id: img.public_id, url: img.secure_url },
-					slug: slugify(name),
-				},
-				{ new: true }
-			);
+			foods = await foodModel
+				.findByIdAndUpdate(
+					req.params.fid,
+					{
+						...req.fields,
+						photo: { id: img.public_id, url: img.secure_url },
+						slug: slugify(name),
+					},
+					{ new: true }
+				)
+				.populate("category");
 		} else {
 			// If no new photo is uploaded, update other fields without modifying the photo field
-			foods = await foodModel.findByIdAndUpdate(
-				req.params.fid,
-				{
-					...req.fields,
-					slug: slugify(name),
-				},
-				{ new: true }
-			);
+			foods = await foodModel
+				.findByIdAndUpdate(
+					req.params.fid,
+					{
+						...req.fields,
+						slug: slugify(name),
+					},
+					{ new: true }
+				)
+				.populate("category");
 		}
 
 		await foods.save();
